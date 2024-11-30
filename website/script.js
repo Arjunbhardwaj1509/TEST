@@ -1,26 +1,21 @@
-// script.js
-
-// Data storage for expenses and budget
+// Data storage and retrieval for budget and expenses
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let budget = localStorage.getItem('budget') || 0;
 
-// Event Listeners for category dropdown
+// Event listener to manage custom category visibility
 document.getElementById('category').addEventListener('change', function() {
     const customCategoryInput = document.getElementById('customCategory');
-    if (this.value === 'Custom') {
-        customCategoryInput.style.display = 'block';
-    } else {
-        customCategoryInput.style.display = 'none';
-    }
+    customCategoryInput.style.display = (this.value === 'Custom') ? 'block' : 'none';
 });
 
-
+// Function to add a new expense
 function addExpense() {
     const expenseName = document.getElementById('expenseName').value;
     const amount = parseFloat(document.getElementById('amount').value);
     const date = document.getElementById('date').value;
     let category = document.getElementById('category').value;
 
+    // If a custom category is chosen, update category with custom value
     if (category === 'Custom') {
         category = document.getElementById('customCategory').value;
     }
@@ -29,41 +24,42 @@ function addExpense() {
     expenses.push(expense);
     localStorage.setItem('expenses', JSON.stringify(expenses));
 
-    updateCharts();
+    refreshCharts();
 }
 
-// Function to set budget
+// Function to set the budget
 function setBudget() {
     budget = parseFloat(document.getElementById('budget').value);
     localStorage.setItem('budget', budget);
-    updateBudgetStatus();
+    updateBudgetIndicator();
 }
 
-// Function to update budget status
-function updateBudgetStatus() {
-    const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
+// Function to update and display the current budget status
+function updateBudgetIndicator() {
+    const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const budgetStatus = document.getElementById('budgetStatus');
-    
-    budgetStatus.innerHTML = `You have spent $${totalExpenses} of your $${budget} budget.`;
-    if (totalExpenses > budget) {
+
+    budgetStatus.textContent = `You have spent $${totalSpent} out of your $${budget} budget.`;
+
+    if (totalSpent > budget) {
         budgetStatus.style.color = 'red';
-        budgetStatus.innerHTML += ' You have exceeded your budget!';
+        budgetStatus.textContent += ' You have exceeded the budget!';
     } else {
         budgetStatus.style.color = 'green';
     }
 }
 
-// Function to clear data
-function clearData() {
+// Function to clear all stored data
+function resetData() {
     localStorage.clear();
     expenses = [];
     budget = 0;
-    updateCharts();
-    updateBudgetStatus();
+    refreshCharts();
+    updateBudgetIndicator();
 }
 
-// Function to generate and update charts
-function updateCharts() {
+// Function to generate and refresh charts based on current data
+function refreshCharts() {
     const categories = {};
     expenses.forEach(expense => {
         categories[expense.category] = (categories[expense.category] || 0) + expense.amount;
@@ -72,6 +68,7 @@ function updateCharts() {
     const categoryLabels = Object.keys(categories);
     const categoryValues = Object.values(categories);
 
+    // Pie chart for expense distribution across categories
     const pieChart = new Chart(document.getElementById('pieChart'), {
         type: 'pie',
         data: {
@@ -84,6 +81,7 @@ function updateCharts() {
         }
     });
 
+    // Bar chart for expenses over time
     const expenseDates = expenses.map(expense => expense.date);
     const expenseAmounts = expenses.map(expense => expense.amount);
 
@@ -99,8 +97,8 @@ function updateCharts() {
         }
     });
 
-    updateBudgetStatus();
+    updateBudgetIndicator();
 }
 
-// Initialize charts on page load
-updateCharts();
+// Load charts and budget status on page load
+refreshCharts();
